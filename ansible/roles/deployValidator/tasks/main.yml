@@ -4,7 +4,7 @@
     state: directory
     owner: "{{ ansible_user }}"
     group: "{{ ansible_user }}"
-    mode: '0755'
+    mode: "0755"
 
 - name: Copy docker-compose.yml file to the server
   copy:

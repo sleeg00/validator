@@ -33,7 +33,9 @@ jobs:
         working-directory: ./terraform
         env:
           TF_LOG: DEBUG # <-- 디버그 로그 활성화
-        run: terraform apply -auto-approve
+        run: |
+          terraform apply -auto-approve \
+            -var="my_ip_address=${{ secrets.MY_PUBLIC_IP }}"
 
       - name: Get Instance IPs from Terraform Output
         id: tf_outputs

@@ -30,7 +30,9 @@ jobs:
         run: terraform init
       
       - name: Terraform Apply
-        working-directory: ./terraform  # <-- Terraform 폴더에서 실행하도록 지정
+        working-directory: ./terraform
+        env:
+          TF_LOG: DEBUG # <-- 디버그 로그 활성화
         run: terraform apply -auto-approve
 
       - name: Get Instance IPs from Terraform Output

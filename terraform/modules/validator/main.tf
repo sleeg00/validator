@@ -23,7 +23,7 @@ resource "aws_security_group" "validator_sg" {
 
   # ------------------- Ingress (수신) 규칙 -------------------
 
- # --- 관리 및 모니터링 UI (내 IP에서만 허용) ---
+  # --- 관리 및 모니터링 UI (내 IP에서만 허용) ---
   ingress {
     description = "SSH from my IP"
     from_port   = 22
@@ -105,7 +105,7 @@ resource "aws_security_group" "validator_sg" {
     protocol    = "tcp"
     cidr_blocks = ["${var.my_ip_address}/32"]
   }
-  
+
   # ------------------------------------------------------------------
   # Egress (송신) 규칙: 서버에서 외부로 나가는 트래픽 허용
   # ------------------------------------------------------------------
@@ -126,17 +126,17 @@ resource "aws_ebs_volume" "validator_data" {
 }
 
 resource "aws_spot_instance_request" "validator_node" {
-  ami                    = var.ami_id
-  instance_type          = "t3.xlarge"
-  wait_for_fulfillment   = true
+  ami                  = var.ami_id
+  instance_type        = "t3.xlarge"
+  wait_for_fulfillment = true
   vpc_security_group_ids = [
-    length(data.aws_security_groups.existing_sg.ids) > 0 ? 
-    data.aws_security_groups.existing_sg.ids[0] : 
+    length(data.aws_security_groups.existing_sg.ids) > 0 ?
+    data.aws_security_groups.existing_sg.ids[0] :
     aws_security_group.validator_sg[0].id
   ]
-  key_name               = var.key_name
-  availability_zone      = var.availability_zone
-  tags                   = { Name = var.instance_name_tag }
+  key_name          = var.key_name
+  availability_zone = var.availability_zone
+  tags              = { Name = var.instance_name_tag }
 }
 
 resource "aws_volume_attachment" "ebs_att" {

@@ -77,10 +77,14 @@ data "aws_instance" "ohio_validator_instance" {
 
   filter {
     name   = "tag:Name"
-    values = ["ValidatorNode-Ohio-Passive"]
+    values = ["ValidatorNode-Ohio-Active"]
   }
   filter {
     name   = "instance-state-name"
     values = ["running", "pending"]
   }
 }
+
+# ------------------------------------------------------------------
+# 조회된 IP 주소들을 결과로 출력
+# ------------------------------------------------------------------

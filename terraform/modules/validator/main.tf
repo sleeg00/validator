@@ -29,7 +29,7 @@ resource "aws_security_group" "validator_sg" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["${var.my_ip_address}/32"]
+    cidr_blocks = ["0.0.0.0/0"]
   }
   ingress {
     description = "Grafana Web UI from my IP"

@@ -21,3 +21,7 @@ variable "instance_name_tag" {
   description = "The Name tag for the EC2 instance"
   type        = string
 }
+variable "security_group_name" {
+  description = "The name of the security group to find or create"
+  type        = string
+}

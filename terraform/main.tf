@@ -35,6 +35,7 @@ module "seoul_validator" {
   key_name          = "seoul"
   my_ip_address     = var.my_ip_address
   instance_name_tag = "ValidatorNode-Seoul-Active"
+  security_group_name = "validator-sg-seoul" 
 }
 
 # ------------------------------------------------------------------
@@ -49,6 +50,7 @@ module "ohio_validator" {
   key_name          = "ohio"
   my_ip_address     = var.my_ip_address
   instance_name_tag = "ValidatorNode-Ohio-Active"
+  security_group_name = "validator-sg-ohio" 
 }
 
 # ------------------------------------------------------------------

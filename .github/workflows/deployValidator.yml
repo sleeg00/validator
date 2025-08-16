@@ -69,8 +69,10 @@ jobs:
 
       - name: Debug Ansible Inventory
         run: cat inventory.ini
-        
-      # 3. Ansible 플레이북 실행
+      
+      - name: Test SSH Connection with Ansible
+        run: ansible all -i inventory.ini -m ping --key-file ./seoul.pem
+      # 6. Ansible 플레이북 실행
       - name: Run Ansible Playbook
         uses: dawidd6/action-ansible-playbook@v2
         with:

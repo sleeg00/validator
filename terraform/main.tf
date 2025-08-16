@@ -84,16 +84,3 @@ data "aws_instance" "ohio_validator_instance" {
     values = ["running", "pending"]
   }
 }
-
-# ------------------------------------------------------------------
-# 조회된 IP 주소들을 결과로 출력
-# ------------------------------------------------------------------
-output "seoul_instance_ip" {
-  description = "The public IP address of the Seoul validator instance."
-  value       = data.aws_instance.seoul_validator_instance.public_ip
-}
-
-output "ohio_instance_ip" {
-  description = "The public IP address of the Ohio validator instance."
-  value       = data.aws_instance.ohio_validator_instance.public_ip
-}

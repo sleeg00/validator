@@ -72,10 +72,6 @@ jobs:
       
       - name: Test SSH Connection with Ansible
         run: ansible all -i inventory.ini -m ping --key-file ./seoul.pem
-      # 6. Ansible 플레이북 실행
-      - name: Run Ansible Playbook
-        uses: dawidd6/action-ansible-playbook@v2
-        with:
-          playbook: ./ansible/deploy.yml # Ansible 플레이북 파일 경로
-          inventory: ./ansible/inventory.ini
-          key: ${{ secrets.SSH_PRIVATE_KEY_SEOUL }} # 이 액션은 대표 키 하나를 요구할 수 있습니다.
+       # 6. Ansible 플레이북 실행
+      - name: Run Ansible Playbook Directly
+        run: ansible-playbook ./ansible/deploy.yml --inventory-file inventory.ini --key-file seoul.pem

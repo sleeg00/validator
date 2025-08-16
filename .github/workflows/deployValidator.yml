@@ -26,17 +26,17 @@ jobs:
         uses: hashicorp/setup-terraform@v3
 
       - name: Terraform Init
+        working-directory: ./terraform  # <-- Terraform 폴더에서 실행하도록 지정
         run: terraform init
       
-      # "YES" 입력 미리 approve
       - name: Terraform Apply
+        working-directory: ./terraform  # <-- Terraform 폴더에서 실행하도록 지정
         run: terraform apply -auto-approve
 
-      # 3. Terraform Output 값을 캡처하여 GitHub Actions 변수로 설정
       - name: Get Instance IPs from Terraform Output
-        id: tf_outputs # 이 단계의 고유 ID를 'tf_outputs'로 지정
+        id: tf_outputs
+        working-directory: ./terraform  # <-- Terraform 폴더에서 실행하도록 지정
         run: |
-          # terraform output 명령어로 IP를 조회하고, GITHUB_OUTPUT에 저장
           echo "seoul_ip=$(terraform output -raw seoul_instance_ip)" >> $GITHUB_OUTPUT
           echo "ohio_ip=$(terraform output -raw ohio_instance_ip)" >> $GITHUB_OUTPUT
 

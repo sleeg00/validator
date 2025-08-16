@@ -1,0 +1,11 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'execution_client'
+    static_configs:
+      - targets: ['execution_client:6060'] # Geth의 메트릭 포트
+
+  - job_name: 'consensus_client'
+    static_configs:
+      - targets: ['consensus_client:5054'] # Lighthouse의 메트릭 포트

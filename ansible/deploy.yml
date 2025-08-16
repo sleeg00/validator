@@ -1,0 +1,4 @@
+- hosts: validators
+  roles:
+    - role: common 
+    - role: deployValidator

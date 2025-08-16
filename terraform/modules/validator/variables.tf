@@ -17,3 +17,7 @@ variable "my_ip_address" {
   description = "My public IP address for SSH access"
   type        = string
 }
+variable "instance_name_tag" {
+  description = "The Name tag for the EC2 instance"
+  type        = string
+}

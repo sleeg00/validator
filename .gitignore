@@ -1,0 +1,13 @@
+*.tfstate
+*.tfstate.*
+
+terraform.tfvars
+*.auto.tfvars
+
+
+.terraform/
+.terraform.lock.hcl
+
+.DS_Store
+*.pem
+validator_keys/

@@ -1,0 +1,27 @@
+- name: Create a directory for the validator stack on the server
+  file:
+    path: /opt/validator
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0755'
+
+- name: Copy docker-compose.yml file to the server
+  copy:
+    src: "{{ playbook_dir }}/../docker-compose.yml"
+    dest: /opt/validator/docker-compose.yml
+
+- name: Copy prometheus configuration directory to the server
+  copy:
+    src: "{{ playbook_dir }}/../prometheus/"
+    dest: /opt/validator/prometheus/
+
+- name: Copy grafana configuration directory to the server
+  copy:
+    src: "{{ playbook_dir }}/../grafana/"
+    dest: /opt/validator/grafana/
+
+- name: Run docker-compose up to start validator containers
+  community.docker.docker_compose:
+    project_src: /opt/validator
+    state: present

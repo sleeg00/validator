@@ -1,0 +1,72 @@
+name: Deploy Validator Infrastructure
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. 코드 체크아웃
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. AWS 인증 및 Terraform 설치/실행 (이전과 동일)
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-2
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        run: terraform init
+      
+      # "YES" 입력 미리 approve
+      - name: Terraform Apply
+        run: terraform apply -auto-approve
+
+      # 3. Terraform Output 값을 캡처하여 GitHub Actions 변수로 설정
+      - name: Get Instance IPs from Terraform Output
+        id: tf_outputs # 이 단계의 고유 ID를 'tf_outputs'로 지정
+        run: |
+          # terraform output 명령어로 IP를 조회하고, GITHUB_OUTPUT에 저장
+          echo "seoul_ip=$(terraform output -raw seoul_instance_ip)" >> $GITHUB_OUTPUT
+          echo "ohio_ip=$(terraform output -raw ohio_instance_ip)" >> $GITHUB_OUTPUT
+
+      # 4. GitHub Secrets에 저장된 키 내용을 임시 파일로 생성
+      - name: Setup SSH Keys
+        run: |
+          echo "${{ secrets.SSH_PRIVATE_KEY_SEOUL }}" > seoul.pem
+          chmod 600 seoul.pem
+          
+          echo "${{ secrets.SSH_PRIVATE_KEY_OHIO }}" > ohio.pem
+          chmod 600 ohio.pem
+
+      # 5. 동적으로 Ansible 인벤토리 파일 생성 (이제 임시 pem 파일을 가리킴)
+      - name: Create Ansible Inventory File
+        run: |
+          echo "[seoul]" > inventory.ini
+          echo "${{ steps.tf_outputs.outputs.seoul_ip }} ansible_ssh_private_key_file=./seoul.pem" >> inventory.ini
+          echo "[ohio]" >> inventory.ini
+          echo "${{ steps.tf_outputs.outputs.ohio_ip }} ansible_ssh_private_key_file=./ohio.pem" >> inventory.ini
+          echo "[validators:children]" >> inventory.ini
+          echo "seoul" >> inventory.ini
+          echo "ohio" >> inventory.ini
+          echo "[validators:vars]" >> inventory.ini
+          echo "ansible_user=ubuntu" >> inventory.ini
+          echo "ansible_ssh_common_args='-o StrictHostKeyChecking=no'" >> inventory.ini # 처음 접속하는 호스트 경고 무시
+
+      # 3. Ansible 플레이북 실행
+      - name: Run Ansible Playbook
+        uses: dawidd6/action-ansible-playbook@v2
+        with:
+          playbook: deploy.yml # Ansible 플레이북 파일 경로
+          inventory: ./inventory.ini
+          key: ${{ secrets.SSH_PRIVATE_KEY_SEOUL }} # 이 액션은 대표 키 하나를 요구할 수 있습니다.

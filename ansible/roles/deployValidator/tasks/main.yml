@@ -21,7 +21,8 @@
     src: "{{ playbook_dir }}/../grafana/"
     dest: /opt/validator/grafana/
 
-- name: Run docker-compose up to start validator containers
-  community.docker.docker_compose:
-    project_src: /opt/validator
+# deployValidator/tasks/main.yml 파일 내
+- name: Run docker-compose up to start validator containers (v2)
+  community.docker.docker_compose_v2:
+    project_src: "{{ project_dir }}"
     state: present

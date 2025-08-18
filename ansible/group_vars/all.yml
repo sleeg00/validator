@@ -1,0 +1,2 @@
+# 모든 서버에 공통으로 적용될 변수
+project_dir: "/home/{{ ansible_user }}/blockchain"

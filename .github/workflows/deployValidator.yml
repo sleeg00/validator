@@ -1,77 +1,77 @@
-name: Deploy Validator Infrastructure
+# name: Deploy Validator Infrastructure
 
-on:
-  push:
-    branches:
-      - main
-  workflow_dispatch:
+# on:
+#   push:
+#     branches:
+#       - main
+#   workflow_dispatch:
 
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      # 1. 코드 체크아웃
-      - name: Checkout code
-        uses: actions/checkout@v4
+# jobs:
+#   deploy:
+#     runs-on: ubuntu-latest
+#     steps:
+#       # 1. 코드 체크아웃
+#       - name: Checkout code
+#         uses: actions/checkout@v4
 
-      # 2. AWS 인증 및 Terraform 설치/실행 (이전과 동일)
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ap-northeast-2
+#       # 2. AWS 인증 및 Terraform 설치/실행 (이전과 동일)
+#       - name: Configure AWS Credentials
+#         uses: aws-actions/configure-aws-credentials@v4
+#         with:
+#           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+#           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+#           aws-region: ap-northeast-2
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+#       - name: Setup Terraform
+#         uses: hashicorp/setup-terraform@v3
 
-      - name: Terraform Init
-        working-directory: ./terraform  # <-- Terraform 폴더에서 실행하도록 지정
-        run: terraform init
+#       - name: Terraform Init
+#         working-directory: ./terraform  # <-- Terraform 폴더에서 실행하도록 지정
+#         run: terraform init
       
-      - name: Terraform Apply
-        working-directory: ./terraform
-        env:
-          TF_LOG: DEBUG # <-- 디버그 로그 활성화
-        run: |
-          terraform apply -auto-approve \
-            -var="my_ip_address=${{ secrets.MY_PUBLIC_IP }}"
+#       - name: Terraform Apply
+#         working-directory: ./terraform
+#         env:
+#           TF_LOG: DEBUG # <-- 디버그 로그 활성화
+#         run: |
+#           terraform apply -auto-approve \
+#             -var="my_ip_address=${{ secrets.MY_PUBLIC_IP }}"
 
-      - name: Get Instance IPs from Terraform Output
-        id: tf_outputs
-        working-directory: ./terraform  # <-- Terraform 폴더에서 실행하도록 지정
-        run: |
-          echo "seoul_ip=$(terraform output -raw seoul_instance_ip)" >> $GITHUB_OUTPUT
-          echo "ohio_ip=$(terraform output -raw ohio_instance_ip)" >> $GITHUB_OUTPUT
+#       - name: Get Instance IPs from Terraform Output
+#         id: tf_outputs
+#         working-directory: ./terraform  # <-- Terraform 폴더에서 실행하도록 지정
+#         run: |
+#           echo "seoul_ip=$(terraform output -raw seoul_instance_ip)" >> $GITHUB_OUTPUT
+#           echo "ohio_ip=$(terraform output -raw ohio_instance_ip)" >> $GITHUB_OUTPUT
 
-      # 4. GitHub Secrets에 저장된 키 내용을 임시 파일로 생성
-      - name: Setup SSH Keys
-        run: |
-          echo "${{ secrets.SSH_PRIVATE_KEY_SEOUL }}" > seoul.pem
-          chmod 600 seoul.pem
+#       # 4. GitHub Secrets에 저장된 키 내용을 임시 파일로 생성
+#       - name: Setup SSH Keys
+#         run: |
+#           echo "${{ secrets.SSH_PRIVATE_KEY_SEOUL }}" > seoul.pem
+#           chmod 600 seoul.pem
           
-          echo "${{ secrets.SSH_PRIVATE_KEY_OHIO }}" > ohio.pem
-          chmod 600 ohio.pem
+#           echo "${{ secrets.SSH_PRIVATE_KEY_OHIO }}" > ohio.pem
+#           chmod 600 ohio.pem
 
-      # 5. 동적으로 Ansible 인벤토리 파일 생성 (이제 임시 pem 파일을 가리킴)
-      - name: Create Ansible Inventory File
-        run: |
-          echo "[seoul]" > inventory.ini
-          echo "${{ steps.tf_outputs.outputs.seoul_ip }} ansible_ssh_private_key_file=./seoul.pem" >> inventory.ini
-          echo "[ohio]" >> inventory.ini
-          echo "${{ steps.tf_outputs.outputs.ohio_ip }} ansible_ssh_private_key_file=./ohio.pem" >> inventory.ini
-          echo "[validators:children]" >> inventory.ini
-          echo "seoul" >> inventory.ini
-          echo "ohio" >> inventory.ini
-          echo "[validators:vars]" >> inventory.ini
-          echo "ansible_user=ubuntu" >> inventory.ini
-          echo "ansible_ssh_common_args='-o StrictHostKeyChecking=no'" >> inventory.ini # 처음 접속하는 호스트 경고 무시
+#       # 5. 동적으로 Ansible 인벤토리 파일 생성 (이제 임시 pem 파일을 가리킴)
+#       - name: Create Ansible Inventory File
+#         run: |
+#           echo "[seoul]" > inventory.ini
+#           echo "${{ steps.tf_outputs.outputs.seoul_ip }} ansible_ssh_private_key_file=./seoul.pem" >> inventory.ini
+#           echo "[ohio]" >> inventory.ini
+#           echo "${{ steps.tf_outputs.outputs.ohio_ip }} ansible_ssh_private_key_file=./ohio.pem" >> inventory.ini
+#           echo "[validators:children]" >> inventory.ini
+#           echo "seoul" >> inventory.ini
+#           echo "ohio" >> inventory.ini
+#           echo "[validators:vars]" >> inventory.ini
+#           echo "ansible_user=ubuntu" >> inventory.ini
+#           echo "ansible_ssh_common_args='-o StrictHostKeyChecking=no'" >> inventory.ini # 처음 접속하는 호스트 경고 무시
 
-      - name: Debug Ansible Inventory
-        run: cat inventory.ini
+#       - name: Debug Ansible Inventory
+#         run: cat inventory.ini
       
-      - name: Test SSH Connection with Ansible
-        run: ansible all -i inventory.ini -m ping --key-file ./seoul.pem
-       # 6. Ansible 플레이북 실행
-      - name: Run Ansible Playbook Directly
-        run: ansible-playbook ./ansible/deploy.yml --inventory-file inventory.ini --key-file seoul.pem
+#       - name: Test SSH Connection with Ansible
+#         run: ansible all -i inventory.ini -m ping --key-file ./seoul.pem
+#        # 6. Ansible 플레이북 실행
+#       - name: Run Ansible Playbook Directly
+#         run: ansible-playbook ./ansible/deploy.yml --inventory-file inventory.ini --key-file seoul.pem

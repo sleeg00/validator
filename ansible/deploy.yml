@@ -1,4 +1,10 @@
-- hosts: validators
+# playbook.yml
+---
+- name: Setup and Deploy Blockchain Validator Environment
+  hosts: validator
+  gather_facts: true # ansible_lsb.codename 같은 시스템 변수를 사용하기 위해 필요
   roles:
-    - role: common 
-    - role: deployValidator
+    - role: common
+      tags: install
+    - role: deploy
+      tags: configure

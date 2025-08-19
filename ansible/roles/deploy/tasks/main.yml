@@ -1,13 +1,28 @@
-- name: Ensure project directory exists
-  ansible.builtin.file:
-    path: "{{ project_dir }}"
-    state: directory
-    mode: '0755'
+---
+- name: Deploy and Configure Blockscout
+  hosts: your_remote_server
+  become: yes
+  vars:
+    project_dir: "/home/{{ ansible_user }}/blockchain/blockscout"
 
-- name: Copy Kurtosis and Docker Compose configuration files
-  ansible.builtin.copy:
-    src: "{{ item }}"
-    dest: "{{ project_dir }}/{{ item }}"
-    mode: '0644'
-  with_items:
-    - kurtosis.yml
+  tasks:
+    - name: Ensure project directory exists
+      ansible.builtin.file:
+        path: "{{ project_dir }}"
+        state: directory
+        mode: '0755'
+
+    - name: Copy configuration files
+      ansible.builtin.copy:
+        src: "{{ item }}"
+        dest: "{{ project_dir }}/{{ item }}"
+        mode: '0644'
+      with_items:
+        - deploy/files/kurtosis.yml
+
+    - name: Run Kurtosis
+      ansible.builtin.command:
+        cmd: "sudo kurtosis run github.com/ethpandaops/ethereum-package --args-file ./kurtosis.yml --image-download always"
+        chdir: "{{ project_dir }}/deploy/files"
+      register: kurtosis_output
+      changed_when: true

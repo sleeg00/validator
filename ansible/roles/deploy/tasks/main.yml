@@ -1,28 +1,91 @@
 ---
-- name: Deploy and Configure Blockscout
-  hosts: your_remote_server
-  become: yes
-  vars:
-    project_dir: "/home/{{ ansible_user }}/blockchain/blockscout"
+# blockscout 클론
+- name: blockscout 클론
+  ansible.builtin.git:
+    repo: "https://github.com/blockscout/blockscout.git"
+    dest: "{{ project_dir }}"
+    clone: yes
+    update: yes
 
-  tasks:
-    - name: Ensure project directory exists
-      ansible.builtin.file:
-        path: "{{ project_dir }}"
-        state: directory
-        mode: '0755'
+- name: 폴더 권한 지정
+  ansible.builtin.file:
+    path: "{{ project_dir }}"
+    state: directory
+    mode: '0755'
 
-    - name: Copy configuration files
-      ansible.builtin.copy:
-        src: "{{ item }}"
-        dest: "{{ project_dir }}/{{ item }}"
-        mode: '0644'
-      with_items:
-        - deploy/files/kurtosis.yml
+# kurtosis 실행
+- name: kurtosis.yml copy
+  ansible.builtin.template:
+    src: "kurtosis.yml.j2"
+    dest: "{{ project_dir }}/kurtosis.yml"
+    mode: '0644'
 
-    - name: Run Kurtosis
-      ansible.builtin.command:
-        cmd: "sudo kurtosis run github.com/ethpandaops/ethereum-package --args-file ./kurtosis.yml --image-download always"
-        chdir: "{{ project_dir }}/deploy/files"
-      register: kurtosis_output
-      changed_when: true
+- name: Run Kurtosis
+  ansible.builtin.command:
+    cmd: "sudo kurtosis run github.com/ethpandaops/ethereum-package --args-file {{ project_dir }}/kurtosis.yml --image-download always"
+    chdir: "{{ project_dir }}"
+  register: kurtosis_output
+  changed_when: true
+## ------------------------------
+
+# rpc port 변수화 ------------------------------
+- name: Geth RPC Port 변수화
+  ansible.builtin.shell:
+    cmd: "sudo docker ps --filter name=el-1-geth-lighthouse --format '{{ '{{' }}.Ports{{ '}}' }}' | grep -oP '(?<=:)[0-9]+(?=->8545/tcp)' | head -n 1"
+  register: geth_rpc_port_output
+  changed_when: false
+
+- name: user-ops-indexer-port(ws port) 변수화
+  ansible.builtin.set_fact:
+    geth_rpc_port: "{{ geth_rpc_port_output.stdout }}"
+    user_ops_indexer_port: "{{ geth_rpc_port_output.stdout | int + 1 }}"
+
+- name: ChainId 변수화
+  ansible.builtin.shell: |
+    curl -X POST http://{{ ansible_host }}:{{ geth_rpc_port }} \
+    -H "Content-Type: application/json" \
+    --data '{"jsonrpc":"2.0","method":"eth_chainId","params":[],"id":1}'
+  register: chain_id_output
+  changed_when: false
+## ------------------------------
+
+# geth_rpc_port 연결 및 cross-orogin error 해결
+- name: Copy user-ops-indexer.yml (geth ws port connect)
+  ansible.builtin.template:
+    src: "user-ops-indexer.yml.j2"
+    dest: "{{ project_dir }}/docker-compose/services/user-ops-indexer.yml"
+    owner: ubuntu
+    group: ubuntu
+    mode: '0644'
+
+- name: Copy common-frontend.env (localhost -> public Ip)
+  ansible.builtin.template:
+    src: "common-frontend.env.j2"
+    dest: "{{ project_dir }}/docker-compose/envs/common-frontend.env"
+    owner: ubuntu
+    group: ubuntu
+    mode: '0644'
+
+- name: Copy nginx.yml (port conflict 해결)
+  ansible.builtin.template:
+    src: "nginx.yml.j2"
+    dest: "{{ project_dir }}/docker-compose/services/nginx.yml"
+    owner: ubuntu
+    group: ubuntu
+    mode: '0644'
+
+- name: copy proxy config (cross origin error 해결)
+  ansible.builtin.template:
+    src: "default.conf.template.j2"
+    dest: "{{ project_dir }}/docker-compose/proxy/default.conf.template"
+    owner: ubuntu
+    group: ubuntu
+    mode: '0644'
+
+- name: copy common-blockscout.env (geth rpc port connect)
+  ansible.builtin.template:
+    src: "common-blockscout.env.j2"
+    dest: "{{ project_dir }}/docker-compose/envs/common-blockscout.env"
+    owner: ubuntu
+    group: ubuntu
+    mode: '0644'

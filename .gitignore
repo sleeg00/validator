@@ -11,3 +11,5 @@ terraform.tfvars
 .DS_Store
 *.pem
 validator_keys/
+
+./ansible/inventory.ini

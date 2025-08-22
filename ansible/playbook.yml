@@ -8,3 +8,5 @@
       tags: install
     - role: deploy
       tags: configure
+    - role: monitoring
+      tags: monitoring

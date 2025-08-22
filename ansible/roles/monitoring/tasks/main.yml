@@ -1,0 +1,36 @@
+---
+- name: 1. Kurtosis에서 metrics-exporter 정보 가져오기
+  ansible.builtin.shell: "kurtosis enclave inspect lucid-atoll | grep ethereum-metrics-exporter"
+  register: exporter_info
+  changed_when: false
+  become: yes
+
+- name: 2. 결과 텍스트에서 Exporter 포트 번호 추출 (수정된 부분)
+  ansible.builtin.set_fact:
+    exporter_port: "{{ exporter_info.stdout | regex_search('http://[\\d\\.:]+') | split(':') | last }}"
+
+- name: 3. 모니터링 배포를 위한 디렉토리 생성
+  ansible.builtin.file:
+    path: "/home/ubuntu/monitoring_stack"
+    state: directory
+    mode: '0755'
+  become: yes
+
+- name: 4. 추출된 포트 번호로 prometheus.yml 파일 생성
+  ansible.builtin.template:
+    src: prometheus.yml.j2
+    dest: "/home/ubuntu/monitoring_stack/prometheus.yml"
+    mode: '0644'
+  become: yes
+
+- name: 5. docker-compose.yml 파일 복사
+  ansible.builtin.template:
+    src: docker-compose.yml
+    dest: "/home/ubuntu/monitoring_stack/docker-compose.yml"
+    mode: '0644'
+  become: yes
+
+- name: 6. Docker Compose로 모니터링 스택 실행
+  community.docker.docker_compose_v2:
+    project_src: "/home/ubuntu/monitoring_stack"
+  become: yes

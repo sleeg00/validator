@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    container_name: prometheus
+    volumes:
+      # Ansible이 생성해 줄 prometheus.yml 파일 경로
+      - "./prometheus.yml:/etc/prometheus/prometheus.yml"
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    ports:
+      - "9090:9090"
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:11.1.0
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    restart: unless-stopped
+
+volumes:
+  prometheus_data:
+  grafana_data:

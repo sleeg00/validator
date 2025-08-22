@@ -1,8 +1,17 @@
 # roles/deploy/files/kurtosis.yml
 participants:
+  # el-1, cl-1 (Geth/Lighthouse) - 메트릭 설정을 수정합니다.
   - el_type: geth
     cl_type: lighthouse
-    count: 2
+    
+    #  Kurtosis 내장 메트릭 익스포터 기능을 활성화합니다.
+    ethereum_metrics_exporter_enabled: true
+
+  # el-2, cl-2 (Geth/Lighthouse)
+  - el_type: geth
+    cl_type: lighthouse
+
+  # el-3, cl-3 (Geth/Teku)
   - el_type: geth
     cl_type: teku
 

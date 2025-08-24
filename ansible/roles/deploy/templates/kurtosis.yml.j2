@@ -1,20 +1,25 @@
 # roles/deploy/files/kurtosis.yml
 participants:
-  # el-1, cl-1 (Geth/Lighthouse) - 메트릭 설정을 수정합니다.
+  # el-1, cl-1: MEV-Boost를 활성화하고 32명의 검증인을 담당
   - el_type: geth
     cl_type: lighthouse
-    
-    #  Kurtosis 내장 메트릭 익스포터 기능을 활성화합니다.
     ethereum_metrics_exporter_enabled: true
+    validator_count: 32
 
-  # el-2, cl-2 (Geth/Lighthouse)
+  # el-2, cl-2: MEV 없이 31명의 검증인을 담당 (비교군)
   - el_type: geth
     cl_type: lighthouse
+    ethereum_metrics_exporter_enabled: true
+    validator_count: 1
+    builder_network_params:
+        mev_enabled: true
 
-  # el-3, cl-3 (Geth/Teku)
+  # el-3, cl-3: Teku 클라이언트를 사용하며 1명의 검증인만 담당
   - el_type: geth
     cl_type: teku
-
+    ethereum_metrics_exporter_enabled: true
+    validator_count: 31
+    
 network_params:
   network_id: "123456"
 

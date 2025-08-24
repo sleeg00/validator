@@ -1,13 +1,13 @@
 ---
-- name: 1. Kurtosis에서 metrics-exporter 정보 가져오기
-  ansible.builtin.shell: "kurtosis enclave inspect lucid-atoll | grep ethereum-metrics-exporter"
-  register: exporter_info
+- name: 1. 실행 중인 모든 metrics-exporter 컨테이너 정보 가져오기
+  ansible.builtin.shell: "sudo docker ps --filter 'name=ethereum-metrics-exporter' --format '{{ '{{' }}.Ports{{ '}}' }}'"
+  register: exporter_ports_raw
   changed_when: false
   become: yes
 
-- name: 2. 결과 텍스트에서 Exporter 포트 번호 추출 (수정된 부분)
+- name: 2. 결과 텍스트에서 모든 Exporter 포트 번호 추출하여 리스트 생성 (수정)
   ansible.builtin.set_fact:
-    exporter_port: "{{ exporter_info.stdout | regex_search('http://[\\d\\.:]+') | split(':') | last }}"
+    exporter_ports: "{{ exporter_ports_raw.stdout_lines | map('regex_replace', '^.*0\\.0\\.0\\.0:(\\d+).*$', '\\1') | list }}"
 
 - name: 3. 모니터링 배포를 위한 디렉토리 생성
   ansible.builtin.file:
@@ -16,7 +16,7 @@
     mode: '0755'
   become: yes
 
-- name: 4. 추출된 포트 번호로 prometheus.yml 파일 생성
+- name: 4. 추출된 포트 목록으로 prometheus.yml 파일 생성
   ansible.builtin.template:
     src: prometheus.yml.j2
     dest: "/home/ubuntu/monitoring_stack/prometheus.yml"

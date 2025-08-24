@@ -3,6 +3,10 @@ global:
 
 scrape_configs:
   - job_name: 'kurtosis-ethereum-metrics'
+    # ✨ 고정된 타겟 목록을 사용하는 static_configs로 변경
     static_configs:
       - targets:
-          - '{{ ansible_host }}:{{ exporter_port }}'
+          # ✨ Ansible이 전달한 exporter_ports 리스트를 순회하며 타겟을 동적으로 생성
+          {% for port in exporter_ports %}
+          - "{{ ansible_host }}:{{ port }}"
+          {% endfor %}
